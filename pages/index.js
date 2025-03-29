@@ -8,7 +8,7 @@ export default function Home() {
   return (
     <div className="min-h-screen p-4 md:p-8 relative overflow-hidden">
       <Head>
-        <title>Mahjong App</title>
+        <title>Zung Jung Score-Tracker</title>
         <meta name="description" content="Mahjong application" />
         {/* Enhanced favicon support */}
         <link rel="icon" href="/favicon.ico?v=1" type="image/x-icon" />
