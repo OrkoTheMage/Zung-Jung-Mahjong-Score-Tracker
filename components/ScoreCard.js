@@ -79,9 +79,8 @@ export default function ScoreCard() {
   const [prevalentWindIndex, setPrevalentWindIndex] = useState(0); // 0 = East, 1 = South, etc.
   
   const [isWinningHandFormVisible, setWinningHandFormVisible] = useState(false);
-  const [selectedHand, setSelectedHand] = useState('');
+  const [selectedHands, setSelectedHands] = useState([]);
   const [selectedBonuses, setSelectedBonuses] = useState([]);
-  const [isSelfDraw, setIsSelfDraw] = useState(false);
   const [activePlayer, setActivePlayer] = useState('');
   const [winningPlayer, setWinningPlayer] = useState('');
 
@@ -100,12 +99,24 @@ export default function ScoreCard() {
     );
   };
 
-  const handleWinningHandSubmit = () => {
-    // Calculate the score for the winning hand
-    const handValue = selectedHand ? (handScores[selectedHand] || 5) : 5; // Use defined hand value or default to 5
-    const bonusValue = selectedBonuses.length * 5; // 5 points per bonus
+  const handleWinningHandSubmit = (bonusValues) => {
+    // Helper function to extract base hand name without numbering (for score lookup)
+    const getBaseHandName = (hand) => {
+      const match = hand.match(/\d+\.\d+(?:\.\d+)?(?:\/\d+)?\s+(.*)/);
+      return match ? match[1] : hand;
+    };
+    
+    // Calculate the score for the winning hand - sum up values for all selected hands
+    const handValue = selectedHands.reduce((total, hand) => {
+      const baseName = getBaseHandName(hand);
+      return total + (handScores[baseName] || 5);
+    }, 0);
+    
+    // Calculate bonus value based on the specific values for each selected bonus
+    const bonusValue = selectedBonuses.reduce((total, bonus) => total + (bonusValues[bonus] || 5), 0);
+    
     const totalHandValue = handValue + bonusValue;
-    const totalScore = totalHandValue * 3; // Winner gets triple the hand value
+    const isSelfDraw = activePlayer === "Self"; // Determine if it's a self draw
     
     // Find the winning player's index
     const winnerIndex = players.findIndex(player => player.name === winningPlayer);
@@ -123,10 +134,26 @@ export default function ScoreCard() {
         
         // Determine scores for each player
         const scores = Array(players.length).fill(0);
-        scores[winnerIndex] = totalScore;
         
-        if (totalHandValue <= 25) {
+        if (isSelfDraw) {
+          // Self draw: each losing player loses totalHandValue/3 points evenly
+          const pointsPerPlayer = Math.ceil(totalHandValue / 3);
+          
+          // Winner gets the total points from all losers
+          const totalWinPoints = pointsPerPlayer * 3;
+          scores[winnerIndex] = totalWinPoints;
+          
+          // Each losing player pays evenly
+          players.forEach((player, index) => {
+            if (index !== winnerIndex) {
+              scores[index] = -pointsPerPlayer;
+            }
+          });
+        } else if (totalHandValue <= 25) {
           // Standard case: each losing player pays handValue
+          const totalWinPoints = totalHandValue * 3; // Winner gets triple the hand value
+          scores[winnerIndex] = totalWinPoints;
+          
           players.forEach((player, index) => {
             if (index !== winnerIndex) {
               scores[index] = -totalHandValue;
@@ -134,31 +161,25 @@ export default function ScoreCard() {
           });
         } else {
           // Special case: hand value > 25
-          if (isSelfDraw) {
-            // In case of self draw, all losing players pay 25 points
-            players.forEach((player, index) => {
-              if (index !== winnerIndex) {
+          // Find the discarder's index
+          const discarderIndex = players.findIndex(player => player.name === activePlayer);
+          
+          // Calculate what the discarder needs to pay
+          // Total points minus what two players pay (25 each)
+          const discarderPays = totalHandValue * 3 - (25 * 2);
+          
+          // Winner gets the total points
+          scores[winnerIndex] = totalHandValue * 3;
+          
+          players.forEach((player, index) => {
+            if (index !== winnerIndex) {
+              if (index === discarderIndex) {
+                scores[index] = -discarderPays;
+              } else {
                 scores[index] = -25;
               }
-            });
-          } else {
-            // Find the discarder's index
-            const discarderIndex = players.findIndex(player => player.name === activePlayer);
-            
-            // Calculate what the discarder needs to pay
-            // Total points minus what two players pay (25 each)
-            const discarderPays = totalScore - (25 * 2);
-            
-            players.forEach((player, index) => {
-              if (index !== winnerIndex) {
-                if (index === discarderIndex) {
-                  scores[index] = -discarderPays;
-                } else {
-                  scores[index] = -25;
-                }
-              }
-            });
-          }
+            }
+          });
         }
         
         // Update the round with calculated scores
@@ -167,10 +188,26 @@ export default function ScoreCard() {
       } else {
         // Create a new round with the calculated scores
         const scores = Array(players.length).fill(0);
-        scores[winnerIndex] = totalScore;
         
-        if (totalHandValue <= 25) {
+        if (isSelfDraw) {
+          // Self draw: each losing player loses totalHandValue/3 points evenly
+          const pointsPerPlayer = Math.ceil(totalHandValue / 3);
+          
+          // Winner gets the total points from all losers
+          const totalWinPoints = pointsPerPlayer * 3;
+          scores[winnerIndex] = totalWinPoints;
+          
+          // Each losing player pays evenly
+          players.forEach((player, index) => {
+            if (index !== winnerIndex) {
+              scores[index] = -pointsPerPlayer;
+            }
+          });
+        } else if (totalHandValue <= 25) {
           // Standard case: each losing player pays handValue
+          const totalWinPoints = totalHandValue * 3; // Winner gets triple the hand value
+          scores[winnerIndex] = totalWinPoints;
+          
           players.forEach((player, index) => {
             if (index !== winnerIndex) {
               scores[index] = -totalHandValue;
@@ -178,31 +215,25 @@ export default function ScoreCard() {
           });
         } else {
           // Special case: hand value > 25
-          if (isSelfDraw) {
-            // In case of self draw, all losing players pay 25 points
-            players.forEach((player, index) => {
-              if (index !== winnerIndex) {
+          // Find the discarder's index
+          const discarderIndex = players.findIndex(player => player.name === activePlayer);
+          
+          // Calculate what the discarder needs to pay
+          // Total points minus what two players pay (25 each)
+          const discarderPays = totalHandValue * 3 - (25 * 2);
+          
+          // Winner gets the total points
+          scores[winnerIndex] = totalHandValue * 3;
+          
+          players.forEach((player, index) => {
+            if (index !== winnerIndex) {
+              if (index === discarderIndex) {
+                scores[index] = -discarderPays;
+              } else {
                 scores[index] = -25;
               }
-            });
-          } else {
-            // Find the discarder's index
-            const discarderIndex = players.findIndex(player => player.name === activePlayer);
-            
-            // Calculate what the discarder needs to pay
-            // Total points minus what two players pay (25 each)
-            const discarderPays = totalScore - (25 * 2);
-            
-            players.forEach((player, index) => {
-              if (index !== winnerIndex) {
-                if (index === discarderIndex) {
-                  scores[index] = -discarderPays;
-                } else {
-                  scores[index] = -25;
-                }
-              }
-            });
-          }
+            }
+          });
         }
         
         const newRound = { 
@@ -220,6 +251,11 @@ export default function ScoreCard() {
       setDealerIndex((prevDealerIndex) => (prevDealerIndex + 1) % players.length);
     }
 
+    // Reset form selections
+    setSelectedHands([]);
+    setSelectedBonuses([]);
+    setActivePlayer('');
+    setWinningPlayer('');
     setWinningHandFormVisible(false); // Close the form after submission
   };
 
@@ -236,9 +272,8 @@ export default function ScoreCard() {
     setDealerIndex(null);
     setPrevalentWindIndex(0);
     setWinningHandFormVisible(false);
-    setSelectedHand('');
+    setSelectedHands([]);
     setSelectedBonuses([]);
-    setIsSelfDraw(false);
     setActivePlayer('');
     setWinningPlayer('');
   };
@@ -367,53 +402,39 @@ export default function ScoreCard() {
         ))}
       </div>
       
-      {/* Buttons section - Winning Hand, Add Round, and End Game */}
+      {/* Buttons section - Winning Hand and End Game */}
       <div className="flex flex-col items-center p-6 md:p-8 space-y-3">
         <motion.button
-          onClick={() => setWinningHandFormVisible(true)}
+          onClick={() => dealerIndex !== null && setWinningHandFormVisible(true)}
+          whileHover={dealerIndex !== null ? "hover" : ""}
+          whileTap={dealerIndex !== null ? "tap" : ""}
+          className={`${dealerIndex !== null ? 'bg-[#9b221c] hover:bg-[#8a1e19]' : 'bg-[#9b221c]/50 cursor-not-allowed'} text-[#f0e6d2] font-bold py-3 px-6 md:py-4 md:px-8 rounded-xl
+          border-2 border-[#d6c8a9] shadow-lg flex items-center justify-center gap-3
+          transition-colors duration-200 fredericka-the-great-regular`}
+          style={{
+            boxShadow: "0 4px 10px rgba(0,0,0,0.3), inset 0 1px 3px rgba(255,255,255,0.3)"
+          }}
+          disabled={dealerIndex === null}
+        >
+          <span className="tracking-wide text-3xl md:text-xl">
+            {dealerIndex !== null ? "Winning Hand" : "Select Dealer First"}
+          </span>
+        </motion.button>
+        
+        {/* End Game button */}
+        <motion.button
+          onClick={resetScoreCard}
           whileHover="hover"
           whileTap="tap"
-          className="bg-[#9b221c] text-[#f0e6d2] font-bold py-3 px-6 md:py-4 md:px-8 rounded-xl
-          border-2 border-[#d6c8a9] shadow-lg flex items-center justify-center gap-3
-          hover:bg-[#8a1e19] transition-colors duration-200 fredericka-the-great-regular"
+          className="bg-[#9b221c] text-[#f0e6d2] font-bold py-2 px-5 md:py-3 md:px-6 rounded-xl
+          border-2 border-[#d6c8a9] shadow-lg flex items-center justify-center gap-2
+          hover:bg-[#8a1e19] transition-colors duration-200 text-sm fredericka-the-great-regular"
           style={{
             boxShadow: "0 4px 10px rgba(0,0,0,0.3), inset 0 1px 3px rgba(255,255,255,0.3)"
           }}
         >
-          <span className="tracking-wide text-3xl md:text-xl">Winning Hand</span>
+          <span className="tracking-wide">End Game</span>
         </motion.button>
-        
-        <div className="flex space-x-3">
-          {/* Add Round button */}
-          <motion.button
-            onClick={addRound}
-            whileHover="hover"
-            whileTap="tap"
-            className="bg-[#9b221c] text-[#f0e6d2] font-bold py-2 px-5 md:py-3 md:px-6 rounded-xl
-            border-2 border-[#d6c8a9] shadow-lg flex items-center justify-center gap-2
-            hover:bg-[#8a1e19] transition-colors duration-200 text-sm fredericka-the-great-regular"
-            style={{
-              boxShadow: "0 4px 10px rgba(0,0,0,0.3), inset 0 1px 3px rgba(255,255,255,0.3)"
-            }}
-          >
-            <span className="tracking-wide">Add Round</span>
-          </motion.button>
-
-          {/* End Game button */}
-          <motion.button
-            onClick={resetScoreCard}
-            whileHover="hover"
-            whileTap="tap"
-            className="bg-[#9b221c] text-[#f0e6d2] font-bold py-2 px-5 md:py-3 md:px-6 rounded-xl
-            border-2 border-[#d6c8a9] shadow-lg flex items-center justify-center gap-2
-            hover:bg-[#8a1e19] transition-colors duration-200 text-sm fredericka-the-great-regular"
-            style={{
-              boxShadow: "0 4px 10px rgba(0,0,0,0.3), inset 0 1px 3px rgba(255,255,255,0.3)"
-            }}
-          >
-            <span className="tracking-wide">End Game</span>
-          </motion.button>
-        </div>
       </div>
 
       {/* Winning Hand Form */}
@@ -422,12 +443,10 @@ export default function ScoreCard() {
           players={players}
           winningPlayer={winningPlayer}
           setWinningPlayer={setWinningPlayer}
-          selectedHand={selectedHand}
-          setSelectedHand={setSelectedHand}
+          selectedHands={selectedHands}
+          setSelectedHands={setSelectedHands}
           selectedBonuses={selectedBonuses}
           toggleBonus={toggleBonus}
-          isSelfDraw={isSelfDraw}
-          setIsSelfDraw={setIsSelfDraw}
           activePlayer={activePlayer}
           setActivePlayer={setActivePlayer}
           onClose={() => setWinningHandFormVisible(false)}
