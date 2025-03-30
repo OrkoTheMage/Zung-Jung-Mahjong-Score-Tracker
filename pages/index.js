@@ -197,7 +197,7 @@ export default function Home() {
             )}
           </>
         ) : (
-          <div className="flex flex-col justify-between h-[100vh] w-full">
+          <div className="flex flex-col justify-between h-[100dvh] w-full">
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center backdrop-blur-sm rounded-3xl p-4 md:p-8 shadow-3xl max-w-md mx-auto bg-black/60 my-4">
                 <button
