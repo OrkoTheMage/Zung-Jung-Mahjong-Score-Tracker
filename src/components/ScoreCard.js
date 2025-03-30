@@ -1,355 +1,255 @@
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import PlayerRow from './PlayerRow';
-import WinningHandForm from './WinningHandForm';
+import { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
+import PlayerRow from './PlayerRow'
+import WinningHandForm from './WinningHandForm'
+import { winds, handScores, bonuses, getBaseHandName } from '../../utils/scoreUtils'
 
 export default function ScoreCard() {
-  // Wind symbols in order: East, South, West, North
-  const winds = ['東', '南', '西', '北'];
-  
-  // Hand scoring values
-  const handScores = {
-    // Trivial Patterns
-    'All Sequences': 5,
-    'Concealed Hand': 5,
-    'No Terminals': 5,
-    
-    // One-Suit Patterns
-    'Mixed One-Suit': 40,
-    'Pure One-Suit': 80,
-    'Nine Gates': 480,
-    
-    // Honor Tiles
-    'Value Honor': 10,
-    'Small Three Dragons': 40,
-    'Big Three Dragons': 130,
-    'Small Three Winds': 30,
-    'Big Three Winds': 120,
-    'Small Four Winds': 320,
-    'Big Four Winds': 400,
-    'All Honors': 320,
-    
-    // Triplets and Kong
-    'All Triplets': 30,
-    'Two Concealed Triplets': 5,
-    'Three Concealed Triplets': 30,
-    'Four Concealed Triplets': 125,
-    'One Kong': 5,
-    'Two Kong': 20,
-    'Three Kong': 120,
-    'Four Kong': 480,
-    
-    // Identical Sets
-    'Two Identical Sequences': 10,
-    'Two Identical Sequences Twice': 60,
-    'Three Identical Sequences': 120,
-    'Four Identical Sequences': 480,
-    
-    // Similar Sets
-    'Three Similar Sequences': 35,
-    'Small Three Similar Triplets': 30,
-    'Three Similar Triplets': 120,
-    
-    // Consecutive Sets
-    'Nine-Tile Straight': 40,
-    'Three Consecutive Triplets': 100,
-    'Four Consecutive Triplets': 200,
-    
-    // Terminals
-    'Mixed Lesser Terminals': 40,
-    'Pure Lesser Terminals': 60,
-    'Mixed Greater Terminals': 100,
-    'Pure Greater Terminals': 400,
-    
-    // Irregular Patterns
-    'Thirteen Terminals': 160,
-    'Seven Pairs': 30,
-    'Chicken Hand': 1
-  };
-  
   const [players, setPlayers] = useState([
     { id: 1, name: 'Player 1', scores: [], editing: false },
     { id: 2, name: 'Player 2', scores: [], editing: false },
     { id: 3, name: 'Player 3', scores: [], editing: false },
     { id: 4, name: 'Player 4', scores: [], editing: false },
-  ]);
+  ])
   
-  const [rounds, setRounds] = useState([]);
-  const [dealerIndex, setDealerIndex] = useState(null); // Track which player is the dealer
-  const [prevalentWindIndex, setPrevalentWindIndex] = useState(0); // 0 = East, 1 = South, etc.
+  const [rounds, setRounds] = useState([])
+  const [dealerIndex, setDealerIndex] = useState(null) // Track which player is the dealer
   
-  const [isWinningHandFormVisible, setWinningHandFormVisible] = useState(false);
-  const [selectedHands, setSelectedHands] = useState([]);
-  const [selectedBonuses, setSelectedBonuses] = useState([]);
-  const [activePlayer, setActivePlayer] = useState('');
-  const [winningPlayer, setWinningPlayer] = useState('');
-
-  const bonuses = [
-    'Final Draw',
-    'Final Discard',
-    'Win on Kong',
-    'Robbing a Kong',
-    'Blessing of Heaven',
-    'Blessing of Earth',
-  ];
+  const [isWinningHandFormVisible, setWinningHandFormVisible] = useState(false)
+  const [selectedHands, setSelectedHands] = useState([])
+  const [selectedBonuses, setSelectedBonuses] = useState([])
+  const [activePlayer, setActivePlayer] = useState('')
+  const [winningPlayer, setWinningPlayer] = useState('')
 
   const toggleBonus = (bonus) => {
     setSelectedBonuses((prev) =>
       prev.includes(bonus) ? prev.filter((b) => b !== bonus) : [...prev, bonus]
-    );
-  };
+    )
+  }
 
   const handleWinningHandSubmit = (bonusValues) => {
-    // Helper function to extract base hand name without numbering (for score lookup)
-    const getBaseHandName = (hand) => {
-      const match = hand.match(/\d+\.\d+(?:\.\d+)?(?:\/\d+)?\s+(.*)/);
-      return match ? match[1] : hand;
-    };
-    
     // Calculate the score for the winning hand - sum up values for all selected hands
     const handValue = selectedHands.reduce((total, hand) => {
-      const baseName = getBaseHandName(hand);
-      return total + (handScores[baseName] || 5);
-    }, 0);
+      const baseName = getBaseHandName(hand)
+      return total + (handScores[baseName] || 5)
+    }, 0)
     
     // Calculate bonus value based on the specific values for each selected bonus
-    const bonusValue = selectedBonuses.reduce((total, bonus) => total + (bonusValues[bonus] || 5), 0);
+    const bonusValue = selectedBonuses.reduce((total, bonus) => total + (bonusValues[bonus] || 5), 0)
     
-    const totalHandValue = handValue + bonusValue;
-    const isSelfDraw = activePlayer === "Self"; // Determine if it's a self draw
+    const totalHandValue = handValue + bonusValue
+    const isSelfDraw = activePlayer === "Self" // Determine if it's a self draw
     
     // Find the winning player's index
-    const winnerIndex = players.findIndex(player => player.name === winningPlayer);
+    const winnerIndex = players.findIndex(player => player.name === winningPlayer)
     
     if (winnerIndex !== -1) {
       // Check if the last round has any scores
-      const lastRound = rounds[rounds.length - 1];
-      const isLastRoundEmpty = lastRound && lastRound.scores.every(score => score === 0);
+      const lastRound = rounds[rounds.length - 1]
+      const isLastRoundEmpty = lastRound && lastRound.scores.every(score => score === 0)
       
-      let updatedRounds;
+      let updatedRounds
       
       if (isLastRoundEmpty) {
         // Use the last round if it's empty
-        updatedRounds = [...rounds];
+        updatedRounds = [...rounds]
         
         // Determine scores for each player
-        const scores = Array(players.length).fill(0);
+        const scores = Array(players.length).fill(0)
         
         if (isSelfDraw) {
           // Self draw: each losing player loses totalHandValue/3 points evenly
-          const pointsPerPlayer = Math.ceil(totalHandValue / 3);
+          const pointsPerPlayer = Math.ceil(totalHandValue / 3)
           
           // Winner gets the total points from all losers
-          const totalWinPoints = pointsPerPlayer * 3;
-          scores[winnerIndex] = totalWinPoints;
+          const totalWinPoints = pointsPerPlayer * 3
+          scores[winnerIndex] = totalWinPoints
           
           // Each losing player pays evenly
           players.forEach((player, index) => {
             if (index !== winnerIndex) {
-              scores[index] = -pointsPerPlayer;
+              scores[index] = -pointsPerPlayer
             }
-          });
+          })
         } else if (totalHandValue <= 25) {
           // Standard case: each losing player pays handValue
-          const totalWinPoints = totalHandValue * 3; // Winner gets triple the hand value
-          scores[winnerIndex] = totalWinPoints;
+          const totalWinPoints = totalHandValue * 3 // Winner gets triple the hand value
+          scores[winnerIndex] = totalWinPoints
           
           players.forEach((player, index) => {
             if (index !== winnerIndex) {
-              scores[index] = -totalHandValue;
+              scores[index] = -totalHandValue
             }
-          });
+          })
         } else {
           // Special case: hand value > 25
           // Find the discarder's index
-          const discarderIndex = players.findIndex(player => player.name === activePlayer);
+          const discarderIndex = players.findIndex(player => player.name === activePlayer)
           
           // Calculate what the discarder needs to pay
           // Total points minus what two players pay (25 each)
-          const discarderPays = totalHandValue * 3 - (25 * 2);
+          const discarderPays = totalHandValue * 3 - (25 * 2)
           
           // Winner gets the total points
-          scores[winnerIndex] = totalHandValue * 3;
+          scores[winnerIndex] = totalHandValue * 3
           
           players.forEach((player, index) => {
             if (index !== winnerIndex) {
               if (index === discarderIndex) {
-                scores[index] = -discarderPays;
+                scores[index] = -discarderPays
               } else {
-                scores[index] = -25;
+                scores[index] = -25
               }
             }
-          });
+          })
         }
         
         // Update the round with calculated scores
-        updatedRounds[updatedRounds.length - 1].scores = scores;
-        setRounds(updatedRounds);
+        updatedRounds[updatedRounds.length - 1].scores = scores
+        setRounds(updatedRounds)
       } else {
         // Create a new round with the calculated scores
-        const scores = Array(players.length).fill(0);
+        const scores = Array(players.length).fill(0)
         
         if (isSelfDraw) {
           // Self draw: each losing player loses totalHandValue/3 points evenly
-          const pointsPerPlayer = Math.ceil(totalHandValue / 3);
+          const pointsPerPlayer = Math.ceil(totalHandValue / 3)
           
           // Winner gets the total points from all losers
-          const totalWinPoints = pointsPerPlayer * 3;
-          scores[winnerIndex] = totalWinPoints;
+          const totalWinPoints = pointsPerPlayer * 3
+          scores[winnerIndex] = totalWinPoints
           
           // Each losing player pays evenly
           players.forEach((player, index) => {
             if (index !== winnerIndex) {
-              scores[index] = -pointsPerPlayer;
+              scores[index] = -pointsPerPlayer
             }
-          });
+          })
         } else if (totalHandValue <= 25) {
           // Standard case: each losing player pays handValue
-          const totalWinPoints = totalHandValue * 3; // Winner gets triple the hand value
-          scores[winnerIndex] = totalWinPoints;
+          const totalWinPoints = totalHandValue * 3 // Winner gets triple the hand value
+          scores[winnerIndex] = totalWinPoints
           
           players.forEach((player, index) => {
             if (index !== winnerIndex) {
-              scores[index] = -totalHandValue;
+              scores[index] = -totalHandValue
             }
-          });
+          })
         } else {
           // Special case: hand value > 25
           // Find the discarder's index
-          const discarderIndex = players.findIndex(player => player.name === activePlayer);
+          const discarderIndex = players.findIndex(player => player.name === activePlayer)
           
           // Calculate what the discarder needs to pay
           // Total points minus what two players pay (25 each)
-          const discarderPays = totalHandValue * 3 - (25 * 2);
+          const discarderPays = totalHandValue * 3 - (25 * 2)
           
           // Winner gets the total points
-          scores[winnerIndex] = totalHandValue * 3;
+          scores[winnerIndex] = totalHandValue * 3
           
           players.forEach((player, index) => {
             if (index !== winnerIndex) {
               if (index === discarderIndex) {
-                scores[index] = -discarderPays;
+                scores[index] = -discarderPays
               } else {
-                scores[index] = -25;
+                scores[index] = -25
               }
             }
-          });
+          })
         }
         
         const newRound = { 
           id: rounds.length + 1, 
           scores: scores 
-        };
+        }
         
         // Add the new round with scores
-        setRounds([...rounds, newRound]);
+        setRounds([...rounds, newRound])
       }
     }
 
-    // Move the dealer index to the next player if the winning player is the dealer
-    if (dealerIndex === winnerIndex) {
-      setDealerIndex((prevDealerIndex) => (prevDealerIndex + 1) % players.length);
-    }
+    // Always move the dealer index to the next player after each winning hand
+    // This ensures winds rotate properly regardless of who wins
+    setDealerIndex((prevDealerIndex) => (prevDealerIndex + 1) % players.length)
 
     // Reset form selections
-    setSelectedHands([]);
-    setSelectedBonuses([]);
-    setActivePlayer('');
-    setWinningPlayer('');
-    setWinningHandFormVisible(false); // Close the form after submission
-  };
+    setSelectedHands([])
+    setSelectedBonuses([])
+    setActivePlayer('')
+    setWinningPlayer('')
+    setWinningHandFormVisible(false) // Close the form after submission
+  }
 
   const addRound = () => {
     // Remove the 4-round limit
-    const newRound = { id: rounds.length + 1, scores: Array(players.length).fill(0) };
-    setRounds([...rounds, newRound]);
-  };
+    const newRound = { id: rounds.length + 1, scores: Array(players.length).fill(0) }
+    setRounds([...rounds, newRound])
+  }
 
   const resetScoreCard = () => {
     // Reset all states to their initial values
-    setPlayers(players.map(player => ({ ...player, scores: [], editing: false })));
-    setRounds([{ id: 1, scores: Array(players.length).fill(0) }]); // Set rounds to a single initial round
-    setDealerIndex(null);
-    setPrevalentWindIndex(0);
-    setWinningHandFormVisible(false);
-    setSelectedHands([]);
-    setSelectedBonuses([]);
-    setActivePlayer('');
-    setWinningPlayer('');
-  };
+    setPlayers(players.map(player => ({ ...player, scores: [], editing: false })))
+    setRounds([{ id: 1, scores: Array(players.length).fill(0) }]) // Set rounds to a single initial round
+    setDealerIndex(null)
+    setWinningHandFormVisible(false)
+    setSelectedHands([])
+    setSelectedBonuses([])
+    setActivePlayer('')
+    setWinningPlayer('')
+  }
 
   const calculateTotals = () => {
     return players.map((player, playerIndex) => {
-      return rounds.reduce((total, round) => total + (round.scores[playerIndex] || 0), 0);
-    });
-  };
+      return rounds.reduce((total, round) => total + (round.scores[playerIndex] || 0), 0)
+    })
+  }
   
   const updateScore = (roundIndex, playerIndex, score) => {
-    const updatedRounds = [...rounds];
-    updatedRounds[roundIndex].scores[playerIndex] = parseInt(score) || 0;
-    setRounds(updatedRounds);
-  };
+    const updatedRounds = [...rounds]
+    updatedRounds[roundIndex].scores[playerIndex] = parseInt(score) || 0
+    setRounds(updatedRounds)
+  }
   
   const toggleEditing = (playerIndex) => {
-    const updatedPlayers = [...players];
-    updatedPlayers[playerIndex].editing = !updatedPlayers[playerIndex].editing;
-    setPlayers(updatedPlayers);
-  };
+    const updatedPlayers = [...players]
+    updatedPlayers[playerIndex].editing = !updatedPlayers[playerIndex].editing
+    setPlayers(updatedPlayers)
+  }
   
   const updatePlayerName = (playerIndex, name) => {
-    const updatedPlayers = [...players];
-    updatedPlayers[playerIndex].name = name;
-    setPlayers(updatedPlayers);
-  };
+    const updatedPlayers = [...players]
+    updatedPlayers[playerIndex].name = name
+    setPlayers(updatedPlayers)
+  }
 
   const setDealer = (playerIndex) => {
-    setDealerIndex(playerIndex);
-  };
+    setDealerIndex(playerIndex)
+  }
   
   // Calculate seat wind for a player based on dealer position
   const getPlayerSeatWind = (playerIndex) => {
-    if (dealerIndex === null) return null;
+    if (dealerIndex === null) return null
     
     // Calculate wind position relative to dealer (who is always East)
     // (playerIndex - dealerIndex + 4) % 4 gives position relative to dealer in clockwise order
-    const windPosition = (playerIndex - dealerIndex + 4) % 4;
+    const windPosition = (playerIndex - dealerIndex + 4) % 4
     return {
       symbol: winds[windPosition],
       name: ['East', 'South', 'West', 'North'][windPosition],
-      isPrevalentWind: windPosition === prevalentWindIndex
-    };
-  };
-  
-  // Get current prevalent wind
-  const getPrevalentWind = () => {
-    return {
-      symbol: winds[prevalentWindIndex],
-      name: ['East', 'South', 'West', 'North'][prevalentWindIndex]
-    };
-  };
-
-  const moveWindsCounterClockwise = () => {
-    setPrevalentWindIndex((prevIndex) => {
-      const newIndex = (prevIndex + 1) % winds.length;
-
-      // Update dealerIndex to reflect the new wind rotation
-      setDealerIndex((prevDealerIndex) => (prevDealerIndex + 1) % players.length);
-
-      return newIndex;
-    });
-  };
+    }
+  }
 
   useEffect(() => {
     if (rounds.length === 0) {
       // Start with a single round instead of 4 fixed rounds
       const initialRounds = [
         { id: 1, scores: Array(players.length).fill(0) }
-      ];
-      setRounds(initialRounds);
+      ]
+      setRounds(initialRounds)
     }
-  }, []);
+  }, [])
 
-  const totals = calculateTotals();
+  const totals = calculateTotals()
 
   return (
     <motion.div 
@@ -455,5 +355,5 @@ export default function ScoreCard() {
       )}
     
     </motion.div>
-  );
+  )
 }

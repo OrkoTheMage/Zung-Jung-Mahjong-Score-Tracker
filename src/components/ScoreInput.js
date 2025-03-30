@@ -10,5 +10,5 @@ export default function ScoreInput({ roundIndex, playerIndex, value, updateScore
         hover:border-[#9b221c] transition-all duration-200 text-sm md:text-lg"
       />
     </div>
-  );
+  )
 }

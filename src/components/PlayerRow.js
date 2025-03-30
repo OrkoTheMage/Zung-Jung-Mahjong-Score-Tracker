@@ -1,5 +1,5 @@
-import { motion } from 'framer-motion';
-import ScoreInput from './ScoreInput';
+import { motion } from 'framer-motion'
+import ScoreInput from './ScoreInput'
 
 export default function PlayerRow({ 
   player,
@@ -24,23 +24,19 @@ export default function PlayerRow({
         >
           Set dealer
         </button>
-      );
+      )
     }
-    
-    const isPrevalentWind = seatWind.isPrevalentWind;
     
     return (
       <div className="flex flex-col items-center mt-2">
         <div className={`
-          ${isDealer ? 'bg-[#9b221c]' : 'bg-[#59493f]'} 
-          ${isPrevalentWind ? 'ring-2 ring-yellow-400' : ''}
+          ${isDealer ? 'bg-[#9b221c] ring-2 ring-yellow-400' : 'bg-[#59493f]'} 
           text-[#f0e6d2] px-2 py-1 rounded-md text-xs font-medium mb-1
         `}>
           {seatWind.name} Wind
         </div>
         <div className={`
-          ${isDealer ? 'bg-[#9b221c]' : 'bg-[#59493f]/80'} 
-          ${isPrevalentWind ? 'ring-2 ring-yellow-400' : ''}
+          ${isDealer ? 'bg-[#9b221c] ring-2 ring-yellow-400' : 'bg-[#59493f]/80'} 
           w-8 h-8 rounded-full flex items-center justify-center text-lg font-bold 
           text-[#f0e6d2] shadow-md relative
         `}>
@@ -53,8 +49,8 @@ export default function PlayerRow({
           )}
         </div>
       </div>
-    );
-  };
+    )
+  }
 
   return (
     <motion.div 
@@ -88,13 +84,10 @@ export default function PlayerRow({
             </motion.div>
           )}
         </div>
-        
         {renderWindIndicator()}
       </div>
       
-      <div className="grid h-full" style={{ 
-        gridTemplateColumns: `repeat(${rounds.length}, 1fr) 1.2fr` 
-      }}>
+      <div className="grid h-full" style={{ gridTemplateColumns: `repeat(${rounds.length}, 1fr) 1.2fr` }}>
         {rounds.map((round, roundIndex) => (
           <ScoreInput 
             key={roundIndex}
@@ -118,5 +111,5 @@ export default function PlayerRow({
         </motion.div>
       </div>
     </motion.div>
-  );
+  )
 }

@@ -1,6 +1,6 @@
 import Head from 'next/head'
 import { useState } from 'react'
-import ScoreCard from '../components/ScoreCard'
+import ScoreCard from '../src/components/ScoreCard'
 
 export default function Home() {
   const [gameStarted, setGameStarted] = useState(false)
