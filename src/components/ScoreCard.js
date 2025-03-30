@@ -28,162 +28,106 @@ export default function ScoreCard() {
   }
 
   const handleWinningHandSubmit = (bonusValues) => {
-    // Calculate the score for the winning hand - sum up values for all selected hands
+    // Calculate the hand value from selected hands and bonuses
     const handValue = selectedHands.reduce((total, hand) => {
       const baseName = getBaseHandName(hand)
       return total + (handScores[baseName] || 5)
     }, 0)
     
-    // Calculate bonus value based on the specific values for each selected bonus
-    const bonusValue = selectedBonuses.reduce((total, bonus) => total + (bonusValues[bonus] || 5), 0)
+    const bonusValue = selectedBonuses.reduce((total, bonus) => 
+      total + (bonusValues[bonus] || 5), 0)
     
     const totalHandValue = handValue + bonusValue
-    const isSelfDraw = activePlayer === "Self" // Determine if it's a self draw
+    const isSelfDraw = activePlayer === "Self"
     
-    // Find the winning player's index
-    const winnerIndex = players.findIndex(player => player.name === winningPlayer)
+    // Find winning player
+    const winningPlayerIndex = players.findIndex(player => player.name === winningPlayer)
+    if (winningPlayerIndex === -1) return // Exit if no valid winning player
     
-    if (winnerIndex !== -1) {
-      // Check if the last round has any scores
-      const lastRound = rounds[rounds.length - 1]
-      const isLastRoundEmpty = lastRound && lastRound.scores.every(score => score === 0)
+    // Define scoring constants
+    const parScore = 25
+    const scores = Array(players.length).fill(0)
+    
+    if (isSelfDraw) {
+      // Self-draw: all non-winners pay evenly
+      const pointsPerNonWinner = Math.ceil(totalHandValue * 3 / 3 )
       
-      let updatedRounds
-      
-      if (isLastRoundEmpty) {
-        // Use the last round if it's empty
-        updatedRounds = [...rounds]
-        
-        // Determine scores for each player
-        const scores = Array(players.length).fill(0)
-        
-        if (isSelfDraw) {
-          // Self draw: each losing player loses totalHandValue/3 points evenly
-          const pointsPerPlayer = Math.ceil(totalHandValue / 3)
-          
-          // Winner gets the total points from all losers
-          const totalWinPoints = pointsPerPlayer * 3
-          scores[winnerIndex] = totalWinPoints
-          
-          // Each losing player pays evenly
-          players.forEach((player, index) => {
-            if (index !== winnerIndex) {
-              scores[index] = -pointsPerPlayer
-            }
-          })
-        } else if (totalHandValue <= 25) {
-          // Standard case: each losing player pays handValue
-          const totalWinPoints = totalHandValue * 3 // Winner gets triple the hand value
-          scores[winnerIndex] = totalWinPoints
-          
-          players.forEach((player, index) => {
-            if (index !== winnerIndex) {
-              scores[index] = -totalHandValue
-            }
-          })
+      players.forEach((player, playerIdx) => {
+        if (playerIdx !== winningPlayerIndex) {
+          // Non-winners lose points
+          scores[playerIdx] = -pointsPerNonWinner
         } else {
-          // Special case: hand value > 25
-          // Find the discarder's index
-          const discarderIndex = players.findIndex(player => player.name === activePlayer)
-          
-          // Calculate what the discarder needs to pay
-          // Total points minus what two players pay (25 each)
-          const discarderPays = totalHandValue * 3 - (25 * 2)
-          
-          // Winner gets the total points
-          scores[winnerIndex] = totalHandValue * 3
-          
-          players.forEach((player, index) => {
-            if (index !== winnerIndex) {
-              if (index === discarderIndex) {
-                scores[index] = -discarderPays
-              } else {
-                scores[index] = -25
-              }
-            }
-          })
+          // Winner gets all points
+          scores[playerIdx] = pointsPerNonWinner * 3
         }
-        
-        // Update the round with calculated scores
-        updatedRounds[updatedRounds.length - 1].scores = scores
-        setRounds(updatedRounds)
+      })
+    } else {
+      // Regular win from discard
+      const activePlayerIndex = players.findIndex(player => player.name === activePlayer)
+      
+      if (totalHandValue <= parScore) {
+        // Standard scoring: everyone pays the same
+        players.forEach((player, playerIdx) => {
+          if (playerIdx !== winningPlayerIndex) {
+            scores[playerIdx] = -totalHandValue
+          } else {
+            scores[playerIdx] = totalHandValue * 3
+          }
+        })
       } else {
-        // Create a new round with the calculated scores
-        const scores = Array(players.length).fill(0)
+        // Special case: above parScore
+        // Non-active players pay parScore
+        const nonActivePlayerPayment = parScore
         
-        if (isSelfDraw) {
-          // Self draw: each losing player loses totalHandValue/3 points evenly
-          const pointsPerPlayer = Math.ceil(totalHandValue / 3)
-          
-          // Winner gets the total points from all losers
-          const totalWinPoints = pointsPerPlayer * 3
-          scores[winnerIndex] = totalWinPoints
-          
-          // Each losing player pays evenly
-          players.forEach((player, index) => {
-            if (index !== winnerIndex) {
-              scores[index] = -pointsPerPlayer
-            }
-          })
-        } else if (totalHandValue <= 25) {
-          // Standard case: each losing player pays handValue
-          const totalWinPoints = totalHandValue * 3 // Winner gets triple the hand value
-          scores[winnerIndex] = totalWinPoints
-          
-          players.forEach((player, index) => {
-            if (index !== winnerIndex) {
-              scores[index] = -totalHandValue
-            }
-          })
-        } else {
-          // Special case: hand value > 25
-          // Find the discarder's index
-          const discarderIndex = players.findIndex(player => player.name === activePlayer)
-          
-          // Calculate what the discarder needs to pay
-          // Total points minus what two players pay (25 each)
-          const discarderPays = totalHandValue * 3 - (25 * 2)
-          
-          // Winner gets the total points
-          scores[winnerIndex] = totalHandValue * 3
-          
-          players.forEach((player, index) => {
-            if (index !== winnerIndex) {
-              if (index === discarderIndex) {
-                scores[index] = -discarderPays
-              } else {
-                scores[index] = -25
-              }
-            }
-          })
-        }
+        // Active player pays the remainder
+        const activePlayerPayment = (totalHandValue * 3) - (nonActivePlayerPayment * 2)
         
-        const newRound = { 
-          id: rounds.length + 1, 
-          scores: scores 
-        }
-        
-        // Add the new round with scores
-        setRounds([...rounds, newRound])
+        players.forEach((player, playerIdx) => {
+          if (playerIdx === winningPlayerIndex) {
+            scores[playerIdx] = totalHandValue * 3
+          } else if (playerIdx === activePlayerIndex) {
+            scores[playerIdx] = -activePlayerPayment
+          } else {
+            scores[playerIdx] = -nonActivePlayerPayment
+          }
+        })
       }
     }
-
-    // Always move the dealer index to the next player after each winning hand
-    // This ensures winds rotate properly regardless of who wins
+    
+    // Update rounds with calculated scores
+    const lastRound = rounds[rounds.length - 1]
+    const isLastRoundEmpty = lastRound && lastRound.scores.every(score => score === 0)
+    
+    if (isLastRoundEmpty) {
+      // Use existing empty round
+      const updatedRounds = [...rounds]
+      updatedRounds[updatedRounds.length - 1].scores = scores
+      setRounds(updatedRounds)
+    } else {
+      // Create a new round
+      const newRound = { 
+        id: rounds.length + 1, 
+        scores: scores 
+      }
+      setRounds([...rounds, newRound])
+    }
+    
+    // Move dealer to next player
     setDealerIndex((prevDealerIndex) => (prevDealerIndex + 1) % players.length)
-
-    // Reset form selections
+    
+    // Reset form state
     setSelectedHands([])
     setSelectedBonuses([])
     setActivePlayer('')
     setWinningPlayer('')
-    setWinningHandFormVisible(false) // Close the form after submission
+    setWinningHandFormVisible(false)
   }
 
   const addRound = () => {
     // Remove the 4-round limit
     const newRound = { id: rounds.length + 1, scores: Array(players.length).fill(0) }
     setRounds([...rounds, newRound])
+    setDealerIndex((prevDealerIndex) => (prevDealerIndex + 1) % players.length)
   }
 
   const resetScoreCard = () => {
@@ -199,15 +143,26 @@ export default function ScoreCard() {
   }
 
   const calculateTotals = () => {
-    return players.map((player, playerIndex) => {
-      return rounds.reduce((total, round) => total + (round.scores[playerIndex] || 0), 0)
+    return players.map((player, playerIdx) => {
+      return rounds.reduce((total, round) => total + (round.scores[playerIdx] || 0), 0)
     })
   }
   
   const updateScore = (roundIndex, playerIndex, score) => {
-    const updatedRounds = [...rounds]
-    updatedRounds[roundIndex].scores[playerIndex] = parseInt(score) || 0
-    setRounds(updatedRounds)
+    const updatedRounds = [...rounds];
+    const parsedScore = parseInt(score) || 0;
+
+    // Update the current round's score
+    updatedRounds[roundIndex].scores[playerIndex] = parsedScore;
+
+    // Recalculate running totals for all subsequent rounds
+    for (let i = roundIndex + 1; i < updatedRounds.length; i++) {
+      updatedRounds[i].scores[playerIndex] =
+        (updatedRounds[i - 1].scores[playerIndex] || 0) +
+        (updatedRounds[i].scores[playerIndex] || 0);
+    }
+
+    setRounds(updatedRounds);
   }
   
   const toggleEditing = (playerIndex) => {
@@ -283,20 +238,20 @@ export default function ScoreCard() {
       
       {/* Player rows section - more compact */}
       <div className="flex-grow flex flex-col">
-        {players.map((player, playerIndex) => (
+        {players.map((player, playerIdx) => (
           <PlayerRow
             key={player.id}
             player={player}
-            playerIndex={playerIndex}
+            playerIndex={playerIdx}
             rounds={rounds}
             updateScore={updateScore}
             toggleEditing={toggleEditing}
             updatePlayerName={updatePlayerName}
-            total={totals[playerIndex]}
+            total={totals[playerIdx]}
             playerCount={players.length}
-            isDealer={dealerIndex === playerIndex} // Only the dealer gets this prop
+            isDealer={dealerIndex === playerIdx} // Only the dealer gets this prop
             setDealer={setDealer}
-            seatWind={getPlayerSeatWind(playerIndex)}
+            seatWind={getPlayerSeatWind(playerIdx)}
             compact={true}
           />
         ))}
@@ -321,20 +276,40 @@ export default function ScoreCard() {
           </span>
         </motion.button>
         
-        {/* End Game button */}
-        <motion.button
-          onClick={resetScoreCard}
-          whileHover="hover"
-          whileTap="tap"
-          className="bg-[#9b221c] text-[#f0e6d2] font-bold py-2 px-5 md:py-3 md:px-6 rounded-xl
-          border-2 border-[#d6c8a9] shadow-lg flex items-center justify-center gap-2
-          hover:bg-[#8a1e19] transition-colors duration-200 text-sm fredericka-the-great-regular"
-          style={{
-            boxShadow: "0 4px 10px rgba(0,0,0,0.3), inset 0 1px 3px rgba(255,255,255,0.3)"
-          }}
-        >
-          <span className="tracking-wide">End Game</span>
-        </motion.button>
+        {/* Buttons section - Exhaustive Draw and End Game */}
+        <div className="flex space-x-3">
+          {dealerIndex !== null && (
+            <>
+              <motion.button
+                onClick={addRound}
+                whileHover="hover"
+                whileTap="tap"
+                className="bg-[#9b221c] text-[#f0e6d2] font-bold py-2 px-5 md:py-3 md:px-6 rounded-xl
+                border-2 border-[#d6c8a9] shadow-lg flex items-center justify-center gap-2
+                hover:bg-[#8a1e19] transition-colors duration-200 text-sm fredericka-the-great-regular"
+                style={{
+                  boxShadow: "0 4px 10px rgba(0,0,0,0.3), inset 0 1px 3px rgba(255,255,255,0.3)"
+                }}
+              >
+                <span className="tracking-wide">New Round</span>
+              </motion.button>
+              <motion.button
+                onClick={resetScoreCard}
+                whileHover="hover"
+                whileTap="tap"
+                className="bg-[#9b221c] text-[#f0e6d2] font-bold py-2 px-5 md:py-3 md:px-6 rounded-xl
+                border-2 border-[#d6c8a9] shadow-lg flex items-center justify-center gap-2
+                hover:bg-[#8a1e19] transition-colors duration-200 text-sm fredericka-the-great-regular"
+                style={{
+                  boxShadow: "0 4px 10px rgba(0,0,0,0.3), inset 0 1px 3px rgba(255,255,255,0.3)"
+                }}
+              >
+                <span className="tracking-wide">End Game</span>
+              </motion.button>
+            </>
+          )}
+        </div>
+        
       </div>
 
       {/* Winning Hand Form */}
