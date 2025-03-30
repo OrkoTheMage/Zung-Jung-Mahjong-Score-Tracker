@@ -116,7 +116,7 @@ export default function Home() {
         loop 
         muted 
         playsInline
-        className="absolute inset-0 w-full h-full object-cover z-0"
+        className="absolute inset-0 w-full h-[100dvh] object-cover z-0"
       >
         <source src="/coffee.mp4" type="video/mp4" />
         {/* Add WebM format for better compatibility */}
