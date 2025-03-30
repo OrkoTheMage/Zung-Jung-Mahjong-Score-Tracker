@@ -124,7 +124,7 @@ export default function Home() {
         Your browser does not support the video tag.
       </video>
       
-      <div className="flex items-center justify-center w-full min-h-screen absolute inset-0">
+      <div className="flex items-center justify-center w-full absolute inset-0">
         {gameStarted ? (
           <>
             <ScoreCard />
