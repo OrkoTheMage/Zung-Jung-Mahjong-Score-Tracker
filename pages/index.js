@@ -130,7 +130,7 @@ export default function Home() {
             <ScoreCard />
             <button
               onClick={() => setShowHandGuide(true)}
-              className="absolute top-4 right-auto left-1/2 -translate-x-1/2 bg-[#9b221c] hover:bg-[#8a1e19] text-[#f0e6d2] font-bold py-2 px-3 md:py-4 md:px-8 rounded-xl
+              className="absolute top-0 md:top-12 right-auto left-1/2 -translate-x-1/2 bg-[#9b221c] hover:bg-[#8a1e19] text-[#f0e6d2] font-bold py-2 px-3 md:py-4 md:px-8 rounded-xl
           border-2 border-[#d6c8a9] shadow-lg flex items-center justify-center gap-3
           transition-colors duration-200 fredericka-the-great-regular" 
               style={{
@@ -197,14 +197,58 @@ export default function Home() {
             )}
           </>
         ) : (
-          <div className="text-center backdrop-blur-sm rounded-3xl p-8 shadow-3xl max-w-md mx-auto bg-black/60">
-            <button
-              onClick={() => setGameStarted(true)}
-              className="bg-red-700 bg-opacity-80 text-white font-bold py-6 px-12 rounded-2xl md:text-7xl text-6xl transition-transform duration-200 transform hover:scale-105 active:scale-95 active:translate-y-1 active:shadow-lg shiny-button"
-              style={{ textShadow: '2px 2px 4px rgba(255, 255, 0, 0.8)' }}
-            >
-              中庸麻雀
-            </button>
+          <div className="flex flex-col justify-between h-[100vh] w-full">
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center backdrop-blur-sm rounded-3xl p-4 md:p-8 shadow-3xl max-w-md mx-auto bg-black/60 my-4">
+                <button
+                  onClick={() => setGameStarted(true)}
+                  className="bg-red-700 bg-opacity-80 text-white font-bold py-4 md:py-6 px-8 md:px-12 rounded-2xl text-5xl md:text-7xl transition-transform duration-200 transform hover:scale-105 active:scale-95 active:translate-y-1 active:shadow-lg shiny-button"
+                  style={{ textShadow: '2px 2px 4px rgba(255, 255, 0, 0.8)' }}
+                >
+                  中庸麻雀
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-t from-black to-black/0 py-3 md:py-6 text-center text-white z-10">
+              <div className="container mx-auto max-w-3xl px-2 md:px-4">
+                <div className="flex justify-center items-center space-x-4 md:space-x-10">
+                  <a
+                    href="https://zj-mahjong.info/zj33_patterns_eng.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group flex flex-col items-center transition-all duration-300 hover:scale-105"
+                  >
+                    <span className="text-xs md:text-sm text-gray-300 group-hover:text-yellow-400">Zung Jung</span>
+                    <span className="text-sm md:text-base font-medium underline decoration-dotted underline-offset-2 group-hover:text-yellow-400 group-hover:decoration-yellow-400">
+                      Mahjong Guide
+                    </span>
+                  </a>
+                  <a
+                    href="https://buymeacoffee.com/aeryngrindk"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group flex flex-col items-center transition-all duration-300 hover:scale-105"
+                  >
+                    <span className="text-xs md:text-sm text-gray-300 group-hover:text-yellow-400">Buy Me a</span>
+                    <span className="text-sm md:text-base font-medium underline decoration-dotted underline-offset-2 group-hover:text-yellow-400 group-hover:decoration-yellow-400">
+                      Cup of Coffee
+                    </span>
+                  </a>
+                </div>
+                <p className="text-xs text-gray-400 mt-2 md:mt-5 font-light">
+                  Made with ❤️ by OrkoTheMage
+                </p>
+                <div className="mt-1 md:mt-2 text-xs md:text-sm text-gray-400 font-light">
+                  Trans Pride! 
+                  <svg className="inline-block w-4 md:w-5 h-2 md:h-3 align-text-bottom ml-1 md:ml-2 mb-0.5" viewBox="0 0 800 480">
+                    <rect fill="#5BCEFA" width="800" height="480" />
+                    <rect fill="#F5A9B8" width="800" height="288" y="96" />
+                    <rect fill="#FFFFFF" width="800" height="96" y="192" />
+                  </svg>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -230,49 +274,6 @@ export default function Home() {
           animation: shiny 2s infinite;
         }
       `}</style>
-
-      {/* Links appear below the button when game is not started */}
-      {!gameStarted && (
-        <div className="absolute bottom-0 md:bottom-0 inset-x-0 bg-gradient-to-t from-black to-black/0 py-4 md:py-6 text-center text-white z-10">
-          <div className="container mx-auto max-w-3xl px-4">
-            <div className="flex justify-center items-center space-x-6 md:space-x-10">
-              <a
-                href="https://zj-mahjong.info/zj33_patterns_eng.html"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group flex flex-col items-center transition-all duration-300 hover:scale-105"
-              >
-                <span className="text-sm text-gray-300 group-hover:text-yellow-400">Zung Jung</span>
-                <span className="text-base font-medium underline decoration-dotted underline-offset-2 group-hover:text-yellow-400 group-hover:decoration-yellow-400">
-                  Mahjong Guide
-                </span>
-              </a>
-              <a
-                href="https://buymeacoffee.com/aeryngrindk"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group flex flex-col items-center transition-all duration-300 hover:scale-105"
-              >
-                <span className="text-sm text-gray-300 group-hover:text-yellow-400">Buy Me a</span>
-                <span className="text-base font-medium underline decoration-dotted underline-offset-2 group-hover:text-yellow-400 group-hover:decoration-yellow-400">
-                  Cup of Coffee
-                </span>
-              </a>
-            </div>
-            <p className="text-xs text-gray-400 mt-4 md:mt-5 font-light">
-              Made with ❤️ by OrkoTheMage
-            </p>
-            <div className="mt-2 text-sm text-gray-400 font-light">
-              Trans Pride! 
-              <svg className="inline-block w-5 h-3 align-text-bottom ml-2 mb-0.5" viewBox="0 0 800 480">
-                <rect fill="#5BCEFA" width="800" height="480" />
-                <rect fill="#F5A9B8" width="800" height="288" y="96" />
-                <rect fill="#FFFFFF" width="800" height="96" y="192" />
-              </svg>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
