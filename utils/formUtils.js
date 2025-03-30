@@ -25,7 +25,7 @@ export const handCategories = {
   '3.0 Honor Tiles': [
     '3.1 Value Honor', '3.2.1 Small Three Dragons', '3.2.2 Big Three Dragons',
     '3.3.1 Small Three Winds', '3.3.2 Big Three Winds', '3.3.3 Small Four Winds',
-    '3.3.4. Big Four Winds', '3.4 All Honors'
+    '3.3.4 Big Four Winds', '3.4 All Honors'
   ],
   '4.0 Triplets and Kong': [
     '4.1 All Triplets', '4.2.1 Two Concealed Triplets', '4.2.2 Three Concealed Triplets',
